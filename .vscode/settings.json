@@ -1,0 +1,9 @@
+{
+    "workbench.colorCustomizations": {
+        "editorInfo.foreground": "#0080ff6a"
+    },
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+        "Formik"
+    ]
+}
