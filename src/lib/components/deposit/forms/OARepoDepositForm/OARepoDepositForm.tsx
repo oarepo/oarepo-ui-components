@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { Formik, FormikHelpers, FormikProps } from "formik";
-import { Button } from "semantic-ui-react";
+import { Button, Label } from "semantic-ui-react";
 
 
 export interface Values {
@@ -101,6 +101,13 @@ const FormikInnerForm = (props: FormikOuterProps & FormikProps<Values>) => {
     );
 };
 
+
+/**
+ * Base component for building record deposition forms
+ * 
+ * @param props 
+ * @returns 
+ */
 export const OARepoDepositForm = (props: OARepoDepositFormProps) => {
     const {
         onSubmit,
@@ -133,12 +140,20 @@ export const OARepoDepositForm = (props: OARepoDepositFormProps) => {
             <Formik initialValues={{ contextualSubmitAction: contextualActions.noop, ...initialValues, }} {...formikProps} onSubmit={onContextualSubmit} >
                 {(formikInnerProps: FormikProps<Values>) => {
                     return (
-                        <FormikInnerForm
-                            formActions={contextualActions}
-                            formActionField={contextualActionField}
-                            {...formikInnerProps}>
-                            {children}
-                        </FormikInnerForm>
+                        <>
+                            <FormikInnerForm
+                                formActions={contextualActions}
+                                formActionField={contextualActionField}
+                                {...formikInnerProps}>
+                                {children}
+
+                            </FormikInnerForm>
+                            {formikInnerProps.status && (
+                                <p>
+                                    <Label color="green">{formikInnerProps.status}</Label>
+                                </p>
+                            )}
+                        </>
                     );
                 }}
             </Formik >
