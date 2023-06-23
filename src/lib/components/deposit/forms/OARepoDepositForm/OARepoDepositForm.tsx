@@ -2,7 +2,9 @@ import React, { ReactNode } from "react";
 import { Formik, FormikHelpers, FormikProps } from "formik";
 import { Button, Label } from "semantic-ui-react";
 
-
+/**
+ * Object for keeping track of form values.
+ */
 export interface Values {
     /**
      * Determines, which submit action will be invoked (by looking it up in `OARepoDepositForm.formActions` prop),
@@ -11,13 +13,17 @@ export interface Values {
     contextualSubmitAction: FormSubmitAction;
 }
 
-export interface FormSubmitAction {
-    (
-        values: Values,
-        formikBag: FormikHelpers<Values>
-    ): void | Promise<any>;
-}
+/**
+ * Form onSubmit action handler.
+ */
+export type FormSubmitAction = (
+    values: Values,
+    formikBag: FormikHelpers<Values>
+) => void | Promise<any>;
 
+/**
+ * Supported onSubmit action handlers on a form.
+ */
 export interface FormActions<T> {
     [key: string]: T;
 }
@@ -37,7 +43,6 @@ interface OARepoDepositFormProps {
      * 
      * **Default actions**:
      * ```
-     * noop: () => undefined,
      * submit: (value: Values, formikBag: FormikHelpers<Values>) => onSubmit(value, formikBag),
      * ```
      */
@@ -89,14 +94,21 @@ const FormikInnerForm = (props: FormikOuterProps & FormikProps<Values>) => {
     return (
         <>
             {children}
-            <Button
-                disabled={isSubmitting}
-                onClick={() => {
-                    setFieldValue(formActionField, formActions.submit);
-                }}
-            >
-                Submit
-            </Button>
+            <div>
+                {Object
+                    .entries(formActions)
+                    .filter(([action]) => action !== 'noop')
+                    .map(([action, f]) =>
+                        <Button
+                            key={action}
+                            style={{ textTransform: 'capitalize' }}
+                            disabled={isSubmitting}
+                            onClick={() => setFieldValue(formActionField, f)}>
+                            {action}
+                        </Button>
+                    )}
+            </div>
+
         </>
     );
 };
@@ -118,17 +130,18 @@ export const OARepoDepositForm = (props: OARepoDepositFormProps) => {
     } = props;
 
     const defaultFormActions = {
-        noop: () => undefined,
         submit: (value: Values, formikBag: FormikHelpers<Values>) => onSubmit(value, formikBag),
-    };
+    } as FormActions<FormSubmitAction>;
 
     const contextualActions = formActions ?? defaultFormActions
+    contextualActions['noop'] = () => undefined
+
     const contextualActionField = "contextualSubmitAction"
 
     const onContextualSubmit = (values: Values, formikBag: FormikHelpers<Values>) => {
         const { setFieldValue, setSubmitting } = formikBag
         const { contextualSubmitAction: action, ...formValues } = values
-        console.debug('[OARepoDepositForm] submitting action:', action.name, 'with:', formValues)
+        action.name && console.debug('[OARepoDepositForm] submitting action:', action.name, 'with:', formValues)
         values.contextualSubmitAction(values, formikBag)
 
         setFieldValue(contextualActionField, contextualActions.noop)
@@ -137,7 +150,9 @@ export const OARepoDepositForm = (props: OARepoDepositFormProps) => {
 
     return (
         <>
-            <Formik initialValues={{ contextualSubmitAction: contextualActions.noop, ...initialValues, }} {...formikProps} onSubmit={onContextualSubmit} >
+            <Formik initialValues={{
+                contextualSubmitAction: contextualActions.noop, ...initialValues,
+            }} {...formikProps} onSubmit={onContextualSubmit}>
                 {(formikInnerProps: FormikProps<Values>) => {
                     return (
                         <>
@@ -146,12 +161,11 @@ export const OARepoDepositForm = (props: OARepoDepositFormProps) => {
                                 formActionField={contextualActionField}
                                 {...formikInnerProps}>
                                 {children}
-
                             </FormikInnerForm>
                             {formikInnerProps.status && (
-                                <p>
+                                <div>
                                     <Label color="green">{formikInnerProps.status}</Label>
-                                </p>
+                                </div>
                             )}
                         </>
                     );
